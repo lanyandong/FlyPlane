@@ -1,8 +1,9 @@
 #include "GameScene.h"
 #include "Constants.h"
-#include "time.h"   
+#include "time.h" 
+#include "OverScene.h"
 
-//返回类型+（命名）函数名
+//定义函数：返回类型+（命名）函数名
 Scene* GameScene::createScene(){
 	return GameScene::create();
 }
@@ -46,8 +47,8 @@ bool GameScene::init(){
 	hero->setPosition(VISIBLE_ORIGIN.x + VISIBLE_SIZE.width / 2, VISIBLE_ORIGIN.y + hero->getContentSize().height / 2);
 	this->addChild(hero, FOERGROUND_ZORDER, HERO_TAG);
 	
-
-	//给飞机添加飞行动画
+	/*******已经将动画添加到缓存了*******/
+	/*//给飞机添加飞行动画
 	//1.创建动画
 	//a.创建动画对象
 	auto ani = Animation::create();
@@ -57,11 +58,13 @@ bool GameScene::init(){
 	//c.设置动画切换时长
 	ani->setDelayPerUnit(0.2f);
 	//d.设置循环次数，使用宏标识无限次，可以使用-1
-	ani->setLoops(CC_REPEAT_FOREVER);
+	ani->setLoops(CC_REPEAT_FOREVER);*/
 	
-	//2.将动画封装为动作
+	//使用动画缓存
+	auto ani = AnimationCache::getInstance()->getAnimation(HERO_FLY_ANIMATION);
+	//将动画封装为动作
 	auto animate = Animate::create(ani);
-	//3.精灵运行动作
+	//精灵运行动作
 	hero->runAction(animate);
 	
 		
@@ -70,10 +73,10 @@ bool GameScene::init(){
 	auto listener = EventListenerTouchOneByOne::create();
 	
 	//2.分解事件，处理逻辑
-	//lambad表达式，用语句表示函数，也就是允许函数里面写函数
-	//也可以写一个[=]等号，表示外部所有变量都按值传递进来，可以访问了，但不能修改
-	//还可以写一个[&]地址符，表示外部所有变量都按引用传递进来，不仅可以访问，还可以修改外部变量本身的值
-	
+	/****lambad表达式，用语句表示函数，也就是允许函数里面写函数
+	*****也可以写一个[=]等号，表示外部所有变量都按值传递进来，可以访问了，但不能修改
+	*****还可以写一个[&]地址符，表示外部所有变量都按引用传递进来，不仅可以访问，还可以修改外部变量本身的值
+	*****/
 	//a.触摸开始时，lambad表达式，
 	listener ->onTouchBegan = [=](Touch* t, Event* e){
 		Vec2 touchPos = t->getLocation();
@@ -84,17 +87,16 @@ bool GameScene::init(){
 		auto move = MoveTo::create(0.5f, touchPos);
 		hero->runAction(move);
 		*/
-		
+
 		//避免闪现移动，使用m_offset记录飞机和触摸点的偏移量
 		this ->m_offset = hero->getPosition() - touchPos;
-		bool isContains = hero->getBoundingBox().containsPoint(touchPos);//触摸点是否在hero上
-		return isContains;//判断
+		bool isContains = hero->getBoundingBox().containsPoint(touchPos); //使用bool变量判断触摸点是否在hero上
+		return isContains && !Director::getInstance()->isPaused() && ! this->m_isOver;;//判断触摸点是否在hero上并且没有暂停并且游戏没有结束
 	};
 
 	//b.持续触摸并移动
 	listener->onTouchMoved = [=](Touch* t, Event* e){
-
-		//Vec2 deltaPos = t->getDelta();  
+		if (Director::getInstance()->isPaused() || this->m_isOver) return;  
 		//避免飞机飞出屏幕外返回不跟随鼠标
 		hero ->setPosition( t->getLocation() + m_offset);
 
@@ -129,17 +131,20 @@ bool GameScene::init(){
 
 	/////////炸弹菜单
 	auto spBomb = Sprite::createWithSpriteFrameName("bomb.png");
-	auto itemBomb = MenuItemSprite::create(spBomb, spBomb, [this](Ref*){
+	auto itemBomb = MenuItemSprite::create(spBomb, spBomb, [this, lblScore](Ref*){
+		if (Director::getInstance()->isPaused()) return;
 		for (auto enemy : this->m_enemies){
 			enemy->down();
+			m_totalScore += enemy->getScore();	
 		}
+		lblScore->setString(StringUtils::format("%d", this->m_totalScore));//爆炸后更新分数
 		this->m_enemies.clear();
 		this->m_bombCount--;
-		this->changeBomb();
+		this->changeBomb(); //更新炸弹在UI界面的显示
 	});
 	itemBomb->setPosition(itemBomb->getContentSize());
 
-	//暂停菜单
+	////////暂停菜单,toggle即为触碰键
 	auto spPauseNormal = Sprite::createWithSpriteFrameName("game_pause_nor.png");
 	auto spPauseSelected = Sprite::createWithSpriteFrameName("game_pause_pressed.png");
 	auto spResumeNormal = Sprite::createWithSpriteFrameName("game_resume_nor.png");
@@ -161,17 +166,19 @@ bool GameScene::init(){
 	toggle->setPosition(VISIBLE_SIZE - toggle->getContentSize());
 
 
-	auto menu = Menu::create();//必须添加菜单这一层
-	menu->addChild(itemBomb, 1, ITEM_BOMB_TAG); //addChild(),需要对象、层数、标签
+	auto menu = Menu::create();//必须添加菜单这一层（将itemBomb 和 toggle 都添加都菜单上响应）
+	menu->addChild(itemBomb, 1, ITEM_BOMB_TAG); //menu->addChild(),需要对象、层数、标签
 	menu->addChild(toggle, 1, TOGGLE_TAG);
 	menu->setPosition(Vec2::ZERO);
 	this->addChild(menu, UI_ZORDER, MENU_TAG);
 	
+	//炸弹的数量显示，使用Label
 	auto lblBomb = Label::createWithBMFont("font.fnt", StringUtils::format("X%d", this->m_bombCount));
 	lblBomb->setPosition(itemBomb->getPosition() + Vec2(40, 0));
 	this->addChild(lblBomb,UI_ZORDER, LABEL_BOMB_TAG);
-	lblBomb->setColor(Color3B(160, 80, 20));
+	lblBomb->setColor(Color3B(255, 255, 255));
 	lblBomb->setAnchorPoint(Vec2::ANCHOR_MIDDLE_LEFT);
+
 	//初始化菜单项和标签的显示
 	this->changeBomb();
 
@@ -180,11 +187,11 @@ bool GameScene::init(){
 	scheduleUpdate();
 
 	schedule(schedule_selector(GameScene::createBullet), CREATE_BULLET_INTERVAL);//OC语法，可以使用lambad语法
-	schedule(schedule_selector(GameScene::createSmallEnemy), CREATE_SMALL_ENEMY_INTERVAL,CC_REPEAT_FOREVER,CREATE_SMALL_ENEMY_DELAY);//OC语法，可以使用lambad语法
+	schedule(schedule_selector(GameScene::createSmallEnemy), CREATE_SMALL_ENEMY_INTERVAL,CC_REPEAT_FOREVER,CREATE_SMALL_ENEMY_DELAY);
 	schedule(schedule_selector(GameScene::createMiddleEnemy), CREATE_MIDDLE_ENEMY_INTERVAL, CC_REPEAT_FOREVER, CREATE_MIDDLE_ENEMY_DELAY);
 	schedule(schedule_selector(GameScene::createBigEnemy), CREATE_BIG_ENEMY_INTERVAL, CC_REPEAT_FOREVER, CREATE_BIG_ENEMY_DELAY);
-
 	schedule(schedule_selector(GameScene::createUfo), CREATE_UFO_INTERVAL, CC_REPEAT_FOREVER, CREATE_UFO_DELAY);
+
 	return true;
 }
 
@@ -192,6 +199,7 @@ bool GameScene::init(){
 void GameScene::update(float delta){
 	auto bg1 = this->getChildByTag(BACKGROUND_TAG_1);
 	auto bg2 = this->getChildByTag(BACKGROUND_TAG_2);
+	auto hero = getChildByTag(HERO_TAG);
 	bg1->setPositionY(bg1->getPositionY() - BACKGROUND_SPEED);
 	//让背景图2跟随背景1移动（取背景1的位置上加背景的高度）
 	bg2->setPositionY(bg1->getPositionY() + bg1->getContentSize().height);
@@ -199,19 +207,8 @@ void GameScene::update(float delta){
 	{
 		bg1->setPositionY(0);
 	}
-	/* 参考背景滚动定义的子弹滚动
-	auto size = Director::getInstance()->getVisibleSize();
-	auto hero = this->getChildByTag(3);
-	auto bullet = this->getChildByTag(4);
-	bullet->setPositionY(bullet->getPositionY() + 4);//子弹滚动，迭代
-	if (bullet->getPositionY() >= size.height) //每一颗子弹到最顶端后发射下一颗子弹（位置由hero决定）
-	{
-		bullet->setPositionY(hero->getPositionY() + hero->getContentSize().height/2 );
-		bullet->setPositionX(hero->getPositionX());
-		
-	}*/
 
-	//遍历子弹集合，/使用 foreach 语句
+	//遍历子弹集合，使用 foreach 语句
 	//创建一个临时集合存放
 	Vector<Sprite *> removableBullets;
 	for (auto bullet : m_bullets)  
@@ -265,27 +262,34 @@ void GameScene::update(float delta){
 				this->removeChild(bullet);
 			}
 		}
+		//与飞机进行碰撞检测
+		if (enemy->getBoundingBox().intersectsRect(hero->getBoundingBox()))
+		{
+			/***将游戏结束封装为一个函数，包括（飞机销毁，界面停止，按钮不响应）*****/
+			this->gameOver();
+			enemy->down();
+			removableEnemies.pushBack(enemy);
+		}
 	}
 
-	//log("%d", m_totalScore); //测试分数更新
-	//删除越界的子弹
-	//log("%d", m_bullets.size()); //测试是否是真移除。两次遍历把无效子弹移除
+	//删除超出屏幕外的子弹
+	//log("%d", m_bullets.size()); //测试是否是真的移除，两次遍历把无效子弹移除
 	for (auto bullet : removableBullets)
 	{
 		m_bullets.eraseObject(bullet);
 	}
 	removableBullets.clear();
 
-	//////删除越界的敌机
+	//////删除超出屏幕外的的敌机
 	for (auto enemy : removableEnemies)
 	{
 		m_enemies.eraseObject(enemy);
 	}
 	removableEnemies.clear();
 
-	/////空投滚动,获取，移除
-	auto hero = getChildByTag(HERO_TAG);
-	Vector<Sprite *> removableUfos; //临时集合
+	//////空投滚动,获取，移除
+	/////使用临时集合存放
+	Vector<Sprite *> removableUfos; 
 	for (auto ufo : m_ufos)
 	{
 		if (ufo->getPositionY() <= 0)
@@ -314,7 +318,6 @@ void GameScene::update(float delta){
 
 		}
 	}
-	//log("%d", m_ufos.size());// 测试是否移除
 	for (auto ufo : removableUfos)
 	{
 		m_ufos.eraseObject(ufo);
@@ -378,7 +381,9 @@ void GameScene::createMiddleEnemy(float){
 
 void GameScene::createBigEnemy(float){
 	this->createEnemy(EnemyType::BIG_ENEMY);
+
 }
+
 
 //////////创建空投
 void GameScene::createUfo(float){
@@ -420,4 +425,26 @@ void GameScene::changeBomb(){
 	}
 }
 
+
+void GameScene::gameOver(){
+	auto hero = this->getChildByTag(HERO_TAG);
+	this->m_isOver = true;
+
+	for (auto node : this->getChildren()){
+		node->stopAllActions();
+	}
+	auto ani = AnimationCache::getInstance()->getAnimation(HERO_DOWN_ANIMATION);
+	auto seq = Sequence::create(Animate::create(ani), CallFuncN::create([this](Node *node){
+		auto scene = OverScene::createScene(this->m_totalScore);
+		//场景跳转
+		Director::getInstance()->replaceScene(scene);
+	}), nullptr);
+	hero->runAction(seq);
+	this->unscheduleAllCallbacks();
+
+	//7.禁用暂停菜单
+	auto menu = this->getChildByTag(MENU_TAG);
+	auto toggle = menu->getChildByTag(TOGGLE_TAG);
+	dynamic_cast<MenuItemToggle*>(toggle)->setEnabled(false);
+}
 

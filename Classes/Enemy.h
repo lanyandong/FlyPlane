@@ -5,7 +5,7 @@
 
 USING_NS_CC;
 
-//枚举类，
+//枚举类
 enum class EnemyType{
 	SMALL_ENEMY,
 	MIDDLE_ENEMY,
@@ -18,7 +18,7 @@ public:
 	bool initWithEnemyType(const EnemyType&);
 	static Enemy* create(const EnemyType& type);
 	void move();
-	bool hit();
+	bool hit();	//敌机是否销毁
 	void down(); //敌机爆炸动画
 
 	//移动速度，一个属性，两种方法

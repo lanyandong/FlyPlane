@@ -33,6 +33,7 @@ bool Enemy::initWithEnemyType(const EnemyType& type){
 
 	if (m_type == EnemyType::BIG_ENEMY)
 	{
+		/*
 		auto ani = Animation::create();
 		//b.添加动画帧（从精灵帧缓存中根据名字查找出来）
 		ani->addSpriteFrame(SpriteFrameCache::getInstance()->getSpriteFrameByName("enemy3_n2.png"));
@@ -43,6 +44,8 @@ bool Enemy::initWithEnemyType(const EnemyType& type){
 		ani->setLoops(CC_REPEAT_FOREVER);
 		//2.将动画封装为动作
 		//3.精灵运行动作
+		*/
+		auto ani = AnimationCache::getInstance()->getAnimation(BIG_ENEMY_FLY_ANIMATION);
 		this->runAction(Animate::create(ani));
 		
 	}

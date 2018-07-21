@@ -5,13 +5,11 @@ USING_NS_CC;
 
 class GameScene : public Scene{
 public:
-	GameScene() :m_offset(Vec2::ZERO), m_totalScore(0), m_doubleBulletsCount(0), m_ufoType(0),m_bombCount(0){}; //初始化
+	GameScene() :m_offset(Vec2::ZERO), m_totalScore(0), m_doubleBulletsCount(0), m_ufoType(0), m_bombCount(0), m_isOver(0){}; //初始化
 	static Scene* createScene();
 
 	bool init() override;  //定义函数，返回类型+函数名+参数列表
-
 	void update(float delta);
-
 	CREATE_FUNC(GameScene)
 
 private:
@@ -25,9 +23,10 @@ private:
 	int m_doubleBulletsCount; //双子单的剩余发射次数
 	int m_ufoType;   //道具类型
 	int m_bombCount; //炸弹数量
+	bool m_isOver;
 
 	void createBullet(float); //创建子弹集合
-	void createEnemy(const EnemyType&); 
+	void createEnemy(const EnemyType& ); 
 
 	void createSmallEnemy(float);
 	void createMiddleEnemy(float);
@@ -35,6 +34,7 @@ private:
 	void createUfo(float); //创建空投
 
 	void changeBomb();
+	void gameOver();
 
 
 };
