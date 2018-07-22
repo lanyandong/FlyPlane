@@ -1,6 +1,9 @@
 #include "OverScene.h"
 #include "Constants.h"
 #include "GameScene.h"
+#include "AudioEngine.h"
+
+using namespace experimental;
 
 Scene* OverScene::createScene(int score)
 {
@@ -40,6 +43,7 @@ bool OverScene::init(int score){
 				ScaleTo::create(1,5),
 				CallFuncN::create([highScore](Node * node) {
 				dynamic_cast<Label*>(node)->setString(StringUtils::format("%d", highScore));
+				AudioEngine::play2d("achievement.mp3");
 			}),
 			ScaleTo::create(1,1), 
 			nullptr);

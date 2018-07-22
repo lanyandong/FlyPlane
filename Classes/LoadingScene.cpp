@@ -1,7 +1,10 @@
 #include "LoadingScene.h"
 #include "GameScene.h"
 #include "Constants.h"
+#include "AudioEngine.h"
 
+
+using namespace experimental;
 
 
 LoadingScene* LoadingScene::createScene()
@@ -78,6 +81,26 @@ bool LoadingScene::init(){
 		}
 		auto aniHeroDown = Animation::createWithSpriteFrames(frames, 0.2f);
 		AnimationCache::getInstance()->addAnimation(aniHeroDown, HERO_DOWN_ANIMATION);
+		
+		
+
+		//‘§º”‘ÿ…˘“ÙŒƒº˛
+		AudioEngine::preload("achievement.mp3");
+		AudioEngine::preload("big_spaceship_flying.mp3");
+		AudioEngine::preload("bullet.mp3");
+		AudioEngine::preload("button.mp3");
+		AudioEngine::preload("enemy1_down.mp3");
+		AudioEngine::preload("enemy2_down.mp3");
+		AudioEngine::preload("enemy3_down.mp3");
+		AudioEngine::preload("game_music.mp3");
+		AudioEngine::preload("game_over.mp3");
+		AudioEngine::preload("get_bomb.mp3");
+		AudioEngine::preload("get_double_laser.mp3");
+		AudioEngine::preload("out_porp.mp3");
+		AudioEngine::preload("use_bomb.mp3");
+
+		
+		
 		return true;
 
 	} while (0);

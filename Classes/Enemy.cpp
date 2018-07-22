@@ -1,5 +1,8 @@
 #include "Enemy.h"
 #include "Constants.h"
+#include "AudioEngine.h"
+
+using namespace experimental;
 
 bool Enemy::initWithEnemyType(const EnemyType& type){
 	//用成员变量保存类型，记住之后后续可以随时访问
@@ -81,6 +84,7 @@ void Enemy::down(){
 		{
 			auto frameName = StringUtils::format("enemy1_down%d.png", i + 1);
 			ani->addSpriteFrame(SpriteFrameCache::getInstance()->getSpriteFrameByName(frameName));
+			AudioEngine::play2d("enemy1_down.mp3");
 		}
 		break;
 	case EnemyType::MIDDLE_ENEMY:
@@ -88,6 +92,7 @@ void Enemy::down(){
 		{
 			auto frameName = StringUtils::format("enemy2_down%d.png", i + 1);
 			ani->addSpriteFrame(SpriteFrameCache::getInstance()->getSpriteFrameByName(frameName));
+			AudioEngine::play2d("enemy2_down.mp3");
 		}
 		break;
 	case EnemyType::BIG_ENEMY:
@@ -95,6 +100,7 @@ void Enemy::down(){
 		{
 			auto frameName = StringUtils::format("enemy3_down%d.png", i + 1);
 			ani->addSpriteFrame(SpriteFrameCache::getInstance()->getSpriteFrameByName(frameName));
+			AudioEngine::play2d("enemy3_down.mp3");
 		}
 		break;
 	default:
@@ -160,6 +166,7 @@ bool Enemy::hit(){
 			ani->addSpriteFrame(SpriteFrameCache::getInstance()->getSpriteFrameByName("enemy3_n1.png"));
 			ani->setDelayPerUnit(0.2f);
 		    runAction(Animate::create(ani));
+		
 		}
 		break;
 		default:

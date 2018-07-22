@@ -18,6 +18,8 @@ private:
 	Vector<Sprite *> m_bullets; //存放有效子弹...
 	Vector<Enemy *> m_enemies; //存放有效飞机...
 	Vector<Sprite *> m_ufos;  //存放Ufo
+
+	Vector<Enemy *> m_enemy;
 	
 	int m_totalScore;         //统计分数
 	int m_doubleBulletsCount; //双子单的剩余发射次数
@@ -32,6 +34,8 @@ private:
 	void createMiddleEnemy(float);
 	void createBigEnemy(float);
 	void createUfo(float); //创建空投
+	
+	void createEnemyGruop(float); //创建敌机阵容
 
 	void changeBomb();
 	void gameOver();

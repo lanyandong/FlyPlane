@@ -2,6 +2,9 @@
 #include "Constants.h"
 #include "time.h" 
 #include "OverScene.h"
+#include "AudioEngine.h"
+
+using namespace experimental;
 
 //定义函数：返回类型+（命名）函数名
 Scene* GameScene::createScene(){
@@ -16,6 +19,7 @@ bool GameScene::init(){
 	}
 	
 	srand((unsigned int)time(NULL));//将当前时间的秒作为随机数的种子，避免伪随机
+	//AudioEngine::play2d("game_music.mp3",true,0.4f);
 
 	/*
 	已经使用宏定义
@@ -141,6 +145,7 @@ bool GameScene::init(){
 		this->m_enemies.clear();
 		this->m_bombCount--;
 		this->changeBomb(); //更新炸弹在UI界面的显示
+		AudioEngine::play2d("use_bomb.mp3");
 	});
 	itemBomb->setPosition(itemBomb->getContentSize());
 
@@ -162,6 +167,7 @@ bool GameScene::init(){
 		{
 			Director::getInstance()->resume();
 		}
+		AudioEngine::play2d("button.mp3");
 	},itemPause,itemResume, nullptr);
 	toggle->setPosition(VISIBLE_SIZE - toggle->getContentSize());
 
@@ -191,6 +197,8 @@ bool GameScene::init(){
 	schedule(schedule_selector(GameScene::createMiddleEnemy), CREATE_MIDDLE_ENEMY_INTERVAL, CC_REPEAT_FOREVER, CREATE_MIDDLE_ENEMY_DELAY);
 	schedule(schedule_selector(GameScene::createBigEnemy), CREATE_BIG_ENEMY_INTERVAL, CC_REPEAT_FOREVER, CREATE_BIG_ENEMY_DELAY);
 	schedule(schedule_selector(GameScene::createUfo), CREATE_UFO_INTERVAL, CC_REPEAT_FOREVER, CREATE_UFO_DELAY);
+
+	schedule(schedule_selector(GameScene::createEnemyGruop), CREATE_ENEMY_GROUP_INTERVAL, 0 ,CREATE_ENEMY_GROUP_DELAY);
 
 	return true;
 }
@@ -306,12 +314,14 @@ void GameScene::update(float delta){
 			removableUfos.pushBack(ufo);
 			if (this -> m_ufoType)
 			{
+				AudioEngine::play2d("get_double_laser.mp3");
 				this->m_doubleBulletsCount = FULL_DOUBLE_BULLET_COUNT;
 			}
 		
 			else if (this->m_bombCount < 3)
 			{
 				//拾取到炸弹道具
+				AudioEngine::play2d("get_bomb.mp3");
 				this->m_bombCount++;
 				this->changeBomb();	
 			}
@@ -328,6 +338,7 @@ void GameScene::update(float delta){
 
 
 void GameScene::createBullet(float){
+	AudioEngine::play2d("bullet.mp3");
 	auto hero = getChildByTag(HERO_TAG);
 	if (m_doubleBulletsCount > 0)
 	{
@@ -381,6 +392,27 @@ void GameScene::createMiddleEnemy(float){
 
 void GameScene::createBigEnemy(float){
 	this->createEnemy(EnemyType::BIG_ENEMY);
+	AudioEngine::play2d("big_spaceship_flying.mp3");
+
+
+}
+
+
+void GameScene::createEnemyGruop(float){
+	
+
+	/***第一架飞机的出现位置随机 + 范围确定 ***/
+	float minX = 10;
+	float maxX = VISIBLE_SIZE.width - minX;
+	float x = rand() % (int)(maxX - minX + 1) + minX;
+	for (auto i = 0; i < 5; i++)
+	{
+		auto enemy = Enemy::create(EnemyType::SMALL_ENEMY);
+		enemy->setPosition(x + VISIBLE_SIZE.width /  10 * i, VISIBLE_SIZE.height);
+		m_enemies.pushBack(enemy);
+		this->addChild(enemy, FOERGROUND_ZORDER);
+	}
+	
 
 }
 
@@ -446,5 +478,7 @@ void GameScene::gameOver(){
 	auto menu = this->getChildByTag(MENU_TAG);
 	auto toggle = menu->getChildByTag(TOGGLE_TAG);
 	dynamic_cast<MenuItemToggle*>(toggle)->setEnabled(false);
+
+	AudioEngine::play2d("game_over.mp3");
 }
 
